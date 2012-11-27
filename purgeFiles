@@ -17,17 +17,18 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys, os, getopt, time
+import sys, os, getopt, time, fnmatch
 
 def main(argv):
     # set default behavior
     force = False
     ages = 'unset'
     directory = 'unset'
+    pattern = '*'
 
     # process command line
     try:
-       opts, args = getopt.getopt(argv, 'ha:d:f', ['help', 'ages=', 'directory=', 'force'])
+       opts, args = getopt.getopt(argv, 'ha:d:p:f', ['help', 'ages=', 'directory=', 'pattern=', 'force'])
        if len(args) > 0:
           print 'ingoring args: %s' % args
     except getopt.GetoptError, err:
@@ -40,6 +41,8 @@ def main(argv):
            sys.exit(2)
        elif opt in ('-d', '--directory'):
            directory = arg
+       elif opt in ('-p', '--pattern'):
+           pattern = arg
        elif opt in ('-a', '--ages'):
            ages = arg
        elif opt in ('-f', '--force'):
@@ -55,7 +58,7 @@ def main(argv):
        usage()
 
     # purge the directory
-    purge(directory, ages, force)
+    purge(directory, pattern, ages, force)
 
 
 # print the usage message and bail
@@ -64,9 +67,10 @@ def usage():
     print ' -h, --help                          Print this help message';
     print ' -a, --ages=age1,age2                Desired ages to keep (in days)';
     print ' -d, --directory=dir                 Target directory';
+    print ' -p, --pattern=pattern               File pattern to match';
     print ' -f, --force                         Force deletion (no simulation mode)\n';
-    print 'e.g. purgeFiles --ages=1,2,4,40 --directory=/tmp';
-    print 'This would purge /tmp and try to keep a file of 40 days, 4 days, 2 days and 1 day old. '
+    print 'e.g. purgeFiles --ages=1,2,4,40 --directory=/tmp --pattern="*.txt"';
+    print 'This would purge /tmp and try to keep a files ending in .txt of 40 days, 4 days, 2 days and 1 day old. '
     print 'Note: this would only do a simulation run. Specify --force to actually delete the files. '
 
     print '\nAuthor: John Quinn, http://johnandcailin.com/john';
@@ -118,15 +122,16 @@ def parseAgesArgument(ages):
     return clean, agesList
 
 # return an age sorted directory listing (tuple list), with ages
-def getSortedDirList(directory):
+def getSortedDirList(directory, pattern):
     dirList = os.listdir(directory)
     sortedDirList = []
 
     for baseName in dirList:
-       fileName = os.path.join(directory,baseName)
-       fileAge = os.path.getmtime(fileName)
-       fileTuple = (fileAge, fileName, baseName)
-       sortedDirList.append(fileTuple)
+       if fnmatch.fnmatch(baseName, pattern):
+           fileName = os.path.join(directory,baseName)
+           fileAge = os.path.getmtime(fileName)
+           fileTuple = (fileAge, fileName, baseName)
+           sortedDirList.append(fileTuple)
     sortedDirList.sort()
 
     return sortedDirList
@@ -152,7 +157,7 @@ def convertAgeEpochToAge(ageEpoch):
     return age
 
 # purge the specified directory
-def purge(directory, ages, force):
+def purge(directory, pattern, ages, force):
     # make sure the backup directory is sound
     checkBackupArea(directory)
 
@@ -160,12 +165,14 @@ def purge(directory, ages, force):
     agesList = checkArguments(ages)
 
     # get the listing of the backup directory
-    sortedDirList = getSortedDirList(directory)
+    sortedDirList = getSortedDirList(directory, pattern)
 
     # go through each file in the directory and ensure that it's a keeper
     agesIterator = iter(agesList)
     currentDesiredAge = agesIterator.next()
     completedDesiredAges = False
+
+    print "finding files matching pattern %s of ages %s in directory %s" % (pattern, ages, directory)
 
     for i,file in enumerate(sortedDirList):
         currentDesiredAgeEpoch = convertAgeToAgeEpoch(currentDesiredAge)
