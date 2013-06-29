@@ -18,6 +18,7 @@
 #
 
 import sys, os, getopt, time, fnmatch
+import shutil
 
 def main(argv):
     # set default behavior
@@ -30,7 +31,7 @@ def main(argv):
     try:
        opts, args = getopt.getopt(argv, 'ha:d:p:f', ['help', 'ages=', 'directory=', 'pattern=', 'force'])
        if len(args) > 0:
-          print 'ingoring args: %s' % args
+          print 'ignoring args: %s' % args
     except getopt.GetoptError, err:
        print str(err)
        usage()
@@ -143,8 +144,16 @@ def deleteFile(file, force):
     if force == False:
         print '%s: Flagged for deletion' % baseName
     else:
-        os.remove(fileName)
-        print '%s: Deleted' % baseName
+        # First check if we are removing a folder or a file...
+        if os.path.isdir(fileName):
+            shutil.rmtree(fileName)
+            print '%s: Deleted Folder' % baseName
+        elif os.path.isfile(fileName):
+            os.remove(fileName)
+            print '%s: Deleted' % baseName
+        else:
+            print '%s: is not a file or folder - WARNING!' % baseName
+
 
 # convert an age in days to seconds from the epoch
 def convertAgeToAgeEpoch(age):
