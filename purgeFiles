@@ -31,9 +31,9 @@ def main(argv):
     try:
        opts, args = getopt.getopt(argv, 'ha:d:p:f', ['help', 'ages=', 'directory=', 'pattern=', 'force'])
        if len(args) > 0:
-          print 'ignoring args: %s' % args
-    except getopt.GetoptError, err:
-       print str(err)
+          print('ignoring args: %s' % args)
+    except(getopt.GetoptError, err):
+       print(str(err))
        usage()
        sys.exit(2)
     for opt, arg in opts:
@@ -51,11 +51,11 @@ def main(argv):
 
     # verify mandatory arguments
     if ages == 'unset':
-       print 'age must be specified (the -a option)'
+       print('age must be specified (the -a option)')
        usage()
 
     if directory == 'unset':
-       print 'directory must be specified (the -d option)'
+       print('directory must be specified (the -d option)')
        usage()
 
     # purge the directory
@@ -64,17 +64,17 @@ def main(argv):
 
 # print the usage message and bail
 def usage():
-    print 'Usage: purgeFiles [OPTION]...';
-    print ' -h, --help                          Print this help message';
-    print ' -a, --ages=age1,age2                Desired ages to keep (in days)';
-    print ' -d, --directory=dir                 Target directory';
-    print ' -p, --pattern=pattern               File pattern to match';
-    print ' -f, --force                         Force deletion (no simulation mode)\n';
-    print 'e.g. purgeFiles --ages=1,2,4,40 --directory=/tmp --pattern="*.txt"';
-    print 'This would purge /tmp and try to keep a files ending in .txt of 40 days, 4 days, 2 days and 1 day old. '
-    print 'Note: this would only do a simulation run. Specify --force to actually delete the files. '
+    print('Usage: purgeFiles [OPTION]...')
+    print(' -h, --help                          Print(this help message')
+    print(' -a, --ages=age1,age2                Desired ages to keep (in days)')
+    print(' -d, --directory=dir                 Target directory')
+    print(' -p, --pattern=pattern               File pattern to match')
+    print(' -f, --force                         Force deletion (no simulation mode)\n')
+    print('e.g. purgeFiles --ages=1,2,4,40 --directory=/tmp --pattern="*.txt"')
+    print('This would purge /tmp and try to keep a files ending in .txt of 40 days, 4 days, 2 days and 1 day old. ')
+    print('Note: this would only do a simulation run. Specify --force to actually delete the files. ')
 
-    print '\nAuthor: John Quinn, http://johnandcailin.com/john';
+    print('\nAuthor: John Quinn, http://johnandcailin.com/john')
     sys.exit(2)
 
 # check for backup directory permissions etc
@@ -82,23 +82,23 @@ def checkBackupArea(directory):
     areaGood = True
 
     if os.path.exists(directory) == False:
-        print 'filepurge: directory %s: does not exist\n' % directory
+        print('filepurge: directory %s: does not exist\n' % directory)
         usage()
 
     if os.path.isdir(directory) == False:
-       print 'filepurge: %s is not a directory. please specify the directory to be purged\n' % directory
+       print('filepurge: %s is not a directory. please specify the directory to be purged\n' % directory)
        usage()
 
     access = os.access(directory, os.W_OK|os.R_OK)
     if access == False:
-        print 'filepurge: directory %s: not readable and writable\n' % directory
+        print('filepurge: directory %s: not readable and writable\n' % directory)
         usage()
 
 # check our argument validity
 def checkArguments(ages):
     clean, agesList = parseAgesArgument(ages)
     if clean != True:
-        print 'filepurge: invalid ages argument: %s' % ages
+        print('filepurge: invalid ages argument: %s' % ages)
         usage()
     return agesList
 
@@ -142,17 +142,17 @@ def deleteFile(file, force):
     baseName = file[2]
     fileName = file[1]
     if force == False:
-        print '%s: Flagged for deletion' % baseName
+        print('%s: Flagged for deletion' % baseName)
     else:
         # First check if we are removing a folder or a file...
         if os.path.isdir(fileName):
             shutil.rmtree(fileName)
-            print '%s: Deleted Folder' % baseName
+            print('%s: Deleted Folder' % baseName)
         elif os.path.isfile(fileName):
             os.remove(fileName)
-            print '%s: Deleted' % baseName
+            print('%s: Deleted' % baseName)
         else:
-            print '%s: is not a file or folder - WARNING!' % baseName
+            print('%s: is not a file or folder - WARNING!' % baseName)
 
 
 # convert an age in days to seconds from the epoch
@@ -178,10 +178,10 @@ def purge(directory, pattern, ages, force):
 
     # go through each file in the directory and ensure that it's a keeper
     agesIterator = iter(agesList)
-    currentDesiredAge = agesIterator.next()
+    currentDesiredAge = next(agesIterator)
     completedDesiredAges = False
 
-    print "finding files matching pattern %s of ages %s in directory %s" % (pattern, ages, directory)
+    print("finding files matching pattern %s of ages %s in directory %s" % (pattern, ages, directory))
 
     for i,file in enumerate(sortedDirList):
         currentDesiredAgeEpoch = convertAgeToAgeEpoch(currentDesiredAge)
@@ -206,18 +206,18 @@ def purge(directory, pattern, ages, force):
         # lovely we found a keeper, so get the next file age to satisfy
         if keeper == True:
             fileAgeDays = convertAgeEpochToAge(fileAge)
-            print '%s: keeping this file of age %d days to satisfy age %d days' % (file[2], fileAgeDays, currentDesiredAge)
+            print('%s: keeping this file of age %d days to satisfy age %d days' % (file[2], fileAgeDays, currentDesiredAge))
             try:
-                currentDesiredAge = agesIterator.next()
+                currentDesiredAge = next(agesIterator)
             except StopIteration:
                 completedDesiredAges = True
 
     # if we haven't made our way through all the requested ages, process them anyway, solely to message the user
     if completedDesiredAges == False:
         while True:
-            print 'no file to satisfy age %d' % currentDesiredAge
+            print('no file to satisfy age %d' % currentDesiredAge)
             try:
-                currentDesiredAge = agesIterator.next()
+                currentDesiredAge = next(agesIterator)
             except StopIteration:
                 break
 
