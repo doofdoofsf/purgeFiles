@@ -75,6 +75,7 @@ def usage():
     print('Note: this would only do a simulation run. Specify --force to actually delete the files. ')
 
     print('\nAuthor: John Quinn, http://johnandcailin.com/john')
+    print('GitHub: https://github.com/doofdoofsf/purgeFiles')
     sys.exit(2)
 
 # check for backup directory permissions etc
